@@ -1,0 +1,29 @@
+version: '3.4'
+services:
+    lighthouse:
+        image: sigp/lighthouse:${LIGHTHOUSE_VERSION}
+        container_name: lighthouse
+        volumes:
+            - $CONSENSUS_DATA_VOLUME:/consensus_data
+            - $CONFIGS_VOLUME:/configs
+            - $CONFIGS_VOLUME:/scripts
+        restart: unless-stopped
+        stop_signal: SIGINT
+        stop_grace_period: 2m
+        command: sh /scripts/lighthouse.sh
+        network_mode: host
+    
+    eth2stats-client:
+        image: macht/eth2stats-client:v1.0.0
+        container_name: eth2stats-client
+        depends_on:
+            - lighthouse
+        command: >
+            run
+            --beacon.type="v1"
+            --eth2stats.node-name=$NODE_NAME
+            --eth2stats.addr=$ETH_2_STATS_ADDRESS
+            --eth2stats.tls=false
+            --beacon.metrics-addr=http://127.0.0.1:5054/metrics
+            --beacon.addr=http://127.0.0.1:5052
+        network_mode: host
